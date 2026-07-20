@@ -1,0 +1,307 @@
+{
+  "asset_id": "regulus-graph-v1",
+  "schema_version": "1.0",
+  "source_code": {
+    "repository": "https://github.com/YangLi624/Regulus",
+    "version": "v0.1.0-graph"
+  },
+  "asset_sha256": "7621a4801a6549b87c987accc476bbf8d70c76c2a3ce85fc2cf127e2ce9e5015",
+  "public_node_labels": {
+    "tf": "TF",
+    "gene": "Gene",
+    "celltype": "Cell type",
+    "go": "CFO"
+  },
+  "node_counts": {
+    "tf": 925,
+    "gene": 20094,
+    "celltype": 303,
+    "cfo": 613
+  },
+  "relations": [
+    [
+      "tf",
+      "regulates",
+      "gene"
+    ],
+    [
+      "gene",
+      "annotated_to",
+      "go"
+    ],
+    [
+      "celltype",
+      "scenic_activity",
+      "tf"
+    ],
+    [
+      "celltype",
+      "llm_context",
+      "go"
+    ],
+    [
+      "tf",
+      "llm_regulates",
+      "go"
+    ]
+  ],
+  "precomputed_build_inputs": [
+    "universes/gene_universe.csv",
+    "universes/tf_universe.csv",
+    "embeddings/gene_geneformer_embeddings.npy",
+    "embeddings/gene_order.txt"
+  ],
+  "files": [
+    {
+      "path": "edges/edges_celltype_go.csv",
+      "role": "celltype_cfo_llm_context",
+      "required": true,
+      "sha256": "e04a383f44115ce5409189e54b5e54a6569dd68e05fe46c22d2991f972314beb",
+      "size_bytes": 138768,
+      "columns": [
+        "src_node_id",
+        "dst_node_id",
+        "src_type",
+        "dst_type",
+        "edge_type",
+        "weight"
+      ],
+      "rows": 3949
+    },
+    {
+      "path": "edges/edges_celltype_tf.csv",
+      "role": "celltype_tf_scenic_activity",
+      "required": true,
+      "sha256": "7541e4d036f26c018e9fcc10cff0d73fd9ef9267d8ddbe74aa9d9bfedab57559",
+      "size_bytes": 9637767,
+      "columns": [
+        "src_node_id",
+        "dst_node_id",
+        "src_type",
+        "dst_type",
+        "edge_type",
+        "weight"
+      ],
+      "rows": 280275
+    },
+    {
+      "path": "edges/edges_gene_go.csv",
+      "role": "gene_cfo_edges",
+      "required": true,
+      "sha256": "e7cda77cab034b5da37ccf177e62322e3ce8cfbec35596398073256a3114e3ef",
+      "size_bytes": 1279236,
+      "columns": [
+        "src_node_id",
+        "dst_node_id",
+        "src_type",
+        "dst_type",
+        "edge_type",
+        "weight"
+      ],
+      "rows": 50652
+    },
+    {
+      "path": "edges/edges_tf_gene.csv",
+      "role": "tf_gene_edges",
+      "required": true,
+      "sha256": "f71b12b9b2b7cf9b8156d439a3d55b4f5edd7b900b40814b6268a5e1125ac689",
+      "size_bytes": 20749517,
+      "columns": [
+        "src_node_id",
+        "dst_node_id",
+        "src_type",
+        "dst_type",
+        "edge_type",
+        "weight"
+      ],
+      "rows": 642731
+    },
+    {
+      "path": "edges/edges_tf_go_llm.csv",
+      "role": "tf_cfo_llm_regulates",
+      "required": true,
+      "sha256": "d79f70eeed804c200acd6bcc1d4c108959b6a622a756ab1adaddbc2c41bf5624",
+      "size_bytes": 212103,
+      "columns": [
+        "src_node_id",
+        "dst_node_id",
+        "src_type",
+        "dst_type",
+        "edge_type",
+        "weight"
+      ],
+      "rows": 6301
+    },
+    {
+      "path": "embeddings/celltype_gene_expression_pca.npy",
+      "role": "celltype_expression_features",
+      "required": true,
+      "sha256": "d1fe5d4160f6e6dc0d2a3fb84a684cbdad80ff637415636d4f73381b10610091",
+      "size_bytes": 155264,
+      "shape": [
+        303,
+        128
+      ],
+      "dtype": "float32"
+    },
+    {
+      "path": "embeddings/gene_geneformer_embeddings.npy",
+      "role": "gene_geneformer_features",
+      "required": true,
+      "sha256": "5be1f03baa4ecf587b56a12b01f3c1f4f6cb63332d90707bfbc965787bfc943b",
+      "size_bytes": 92593280,
+      "shape": [
+        20094,
+        1152
+      ],
+      "dtype": "float32"
+    },
+    {
+      "path": "embeddings/gene_order.txt",
+      "role": "gene_order",
+      "required": true,
+      "sha256": "fd1a62e6106e8205d1df4d7a3fb26205bbd6b352e035bb630607d82d44a2dbfb",
+      "size_bytes": 156186
+    },
+    {
+      "path": "embeddings/go_gene_counts.npy",
+      "role": "cfo_gene_count_features",
+      "required": true,
+      "sha256": "686973e1cf650b100a01e4bf06c335f10d6768b0e72b3f72e3f2e9e253838e21",
+      "size_bytes": 5032,
+      "shape": [
+        613,
+        1
+      ],
+      "dtype": "int64"
+    },
+    {
+      "path": "embeddings/go_text_embeddings.npy",
+      "role": "cfo_text_features",
+      "required": true,
+      "sha256": "b0b162640eb5605dbcb9163d1b5115b464e537835864eca78d32b5fb836784da",
+      "size_bytes": 1883264,
+      "shape": [
+        613,
+        768
+      ],
+      "dtype": "float32"
+    },
+    {
+      "path": "embeddings/tf_celltype_expression.npy",
+      "role": "tf_celltype_activity_features",
+      "required": true,
+      "sha256": "33e789332f5d1be8138611b2b423e4ed3cd00d935c33ee74a16511fc3e40c87e",
+      "size_bytes": 2242328,
+      "shape": [
+        303,
+        925
+      ],
+      "dtype": "float64"
+    },
+    {
+      "path": "embeddings/tf_family_onehot.npy",
+      "role": "tf_family_features",
+      "required": true,
+      "sha256": "ae198edd7ac161e3ff624843c51d53d9640092df4bb2916410a5c8b28ccfb4b9",
+      "size_bytes": 414528,
+      "shape": [
+        925,
+        56
+      ],
+      "dtype": "float64"
+    },
+    {
+      "path": "metadata.json",
+      "role": "graph_metadata",
+      "required": true,
+      "sha256": "514393ec2e8e4f47a573ad524a6a3bdfe45acada05e6e1e1d23647526daad911",
+      "size_bytes": 351
+    },
+    {
+      "path": "nodes/nodes_celltype.csv",
+      "role": "celltype_node_table",
+      "required": true,
+      "sha256": "4ffeb66704734d9842c27ef73e835ff86450f0686bc747f06eb93befc6ae7e06",
+      "size_bytes": 13759,
+      "columns": [
+        "celltype_index",
+        "celltype_name",
+        "organ",
+        "gene_expression_pca_dim"
+      ],
+      "rows": 303
+    },
+    {
+      "path": "nodes/nodes_gene.csv",
+      "role": "gene_node_table",
+      "required": true,
+      "sha256": "385624c4dd93e19d1268a5957703db3dc7dbedc11b0bc798c5165a007126e643",
+      "size_bytes": 265664,
+      "columns": [
+        "gene_index",
+        "gene_symbol"
+      ],
+      "rows": 20094
+    },
+    {
+      "path": "nodes/nodes_go.csv",
+      "role": "cfo_node_table",
+      "required": true,
+      "sha256": "51713c3f67dc119acbd9ba6e83616b019e13f5fb7d12af98f893889e236ef4a3",
+      "size_bytes": 30555,
+      "columns": [
+        "go_index",
+        "go_id",
+        "gene_count",
+        "go_name"
+      ],
+      "rows": 613
+    },
+    {
+      "path": "nodes/nodes_tf.csv",
+      "role": "tf_node_table",
+      "required": true,
+      "sha256": "d3c36e166ce975c8a3e9b22a93db7c691185f3daf6f39592384e406bb89901b6",
+      "size_bytes": 23247,
+      "columns": [
+        "tf_index",
+        "tf_symbol",
+        "Family",
+        "family_onehot_dim",
+        "celltype_expression_dim"
+      ],
+      "rows": 925
+    },
+    {
+      "path": "universes/gene_universe.csv",
+      "role": "gene_universe",
+      "required": true,
+      "sha256": "385624c4dd93e19d1268a5957703db3dc7dbedc11b0bc798c5165a007126e643",
+      "size_bytes": 265664,
+      "columns": [
+        "gene_index",
+        "gene_symbol"
+      ],
+      "rows": 20094
+    },
+    {
+      "path": "universes/tf_universe.csv",
+      "role": "tf_universe",
+      "required": true,
+      "sha256": "78e3593b235bc643f5dcb0eaf13aca25410845853e26e10efd54b62fe9442825",
+      "size_bytes": 16730,
+      "columns": [
+        "tf_index",
+        "tf_symbol",
+        "Family"
+      ],
+      "rows": 925
+    }
+  ],
+  "paper_checkpoint": {
+    "authority": "server benchmark checkpoint",
+    "filename": "best_model.pt",
+    "sha256": "05d238bb2564f8f33a5691eae5f79c54e3805f9728a457db0ef2494e07d897a3"
+  }
+}

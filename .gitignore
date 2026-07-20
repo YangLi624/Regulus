@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+outputs/
+
+# Graph data and checkpoints are distributed through Zenodo.
+assets/graph/regulus_graph_v1/*
+!assets/graph/regulus_graph_v1/manifest.json

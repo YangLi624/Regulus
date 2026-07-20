@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use the Regulus graph model, please cite this software release."
+title: "Regulus"
+version: 0.1.0
+type: software
+license: MIT
+authors:
+  - family-names: "Li"
+    given-names: "Yang"
+repository-code: "https://github.com/YangLi624/Regulus"
+keywords:
+  - single-cell
+  - heterogeneous graph
+  - gene regulatory network
+  - cellular function ontology

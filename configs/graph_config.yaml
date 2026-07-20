@@ -1,0 +1,56 @@
+data:
+  graph_asset_dir: assets/graph/regulus_graph_v1
+  manifest: manifest.json
+  validate_hashes: true
+
+model:
+  hidden_dim: 128
+  num_heads: 4
+  num_layers: 2
+  dropout: 0.2
+  use_reconstruction: true
+  use_gradient_checkpointing: true
+  node_types: [tf, gene, celltype, go]
+  # Relation order is part of the paper-checkpoint compatibility contract.
+  # The internal node key remains "go"; public documentation calls these nodes CFOs.
+  edge_types:
+    - [tf, regulates, gene]
+    - [gene, annotated_to, go]
+    - [celltype, scenic_activity, tf]
+    - [celltype, llm_context, go]
+    - [tf, llm_regulates, go]
+
+loss:
+  recon_weight: 0.25
+  # Absolute subweights preserve the four paper-model contributions after the
+  # retired direct TF-CFO objective is removed; they intentionally sum to 0.8.
+  tf_gene_recon_weight: 0.2
+  gene_go_recon_weight: 0.2
+  celltype_tf_recon_weight: 0.2
+  celltype_go_recon_weight: 0.2
+  contrast_weight: 0.25
+  contrast_temperature: 0.07
+  contrast_num_negatives: 4096
+  contrast_batch_size: 2048
+  contrast_skip_gene: false
+  cross_type_align_weight: 0.5
+  align_celltype_go_weight: 0.25
+  align_gene_go_weight: 0.20
+  align_tf_gene_weight: 0.15
+  align_celltype_tf_weight: 0.15
+
+training:
+  epochs: 1000
+  learning_rate: 0.001
+  weight_decay: 0.00005
+  grad_clip_norm: 1.0
+  use_mixed_precision: true
+  patience: 100
+  min_delta: 0.0001
+  log_interval: 5
+  edge_mask_ratio: 0.3
+  recon_mask_ratio: 0.5
+
+seeds:
+  seed: 42
+  deterministic: true
