@@ -1,1 +1,1 @@
-"""Command-line interfaces for Regulus."""
+"""Regulus command-line interface."""

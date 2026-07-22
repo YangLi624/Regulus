@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "bundles": {
+    "norman-post-state-v1": {
+      "representation": "post_state",
+      "channels": "gene_cfo",
+      "description": "Norman complete single-gene CRISPRa perturbation model (105 candidates)",
+      "archive": "norman-post-state-v1.zip",
+      "size_bytes": 125313217,
+      "sha256": "dca7508bec946c2c0f3f7d5b63fdf1c1f04fb8ec36b417ca52dbdeb37b46ecac",
+      "url": "https://zenodo.org/records/21488583/files/norman-post-state-v1.zip?download=1"
+    },
+    "schmidt-post-state-v1": {
+      "representation": "post_state",
+      "channels": "gene_cfo",
+      "description": "Schmidt CRISPRa perturbation model",
+      "archive": "schmidt-post-state-v1.zip",
+      "size_bytes": 125289463,
+      "sha256": "82dd36c05e3079893739fa24db8557e99b0f16be10bf8da4772ad7a6da5b4a18",
+      "url": "https://zenodo.org/records/21488583/files/schmidt-post-state-v1.zip?download=1"
+    },
+    "tian-crispra-post-state-v1": {
+      "representation": "post_state",
+      "channels": "gene_cfo",
+      "description": "Tian CRISPRa perturbation model",
+      "archive": "tian-crispra-post-state-v1.zip",
+      "size_bytes": 125302978,
+      "sha256": "ff6aa0854f72e7213c9307a9f3ec039ebde755077cda5f23f70ff63b683d2e38",
+      "url": "https://zenodo.org/records/21488583/files/tian-crispra-post-state-v1.zip?download=1"
+    },
+    "joung-tfatlas-cfo-post-state-v1": {
+      "representation": "post_state",
+      "channels": "cfo",
+      "description": "Joung TFAtlas CFO model for virtual function manipulation",
+      "archive": "joung-tfatlas-cfo-post-state-v1.zip",
+      "size_bytes": 125639724,
+      "sha256": "932fd641f0781af15ff8db9af90c4ad0a1ebd32ccf43d92bbdccb02ae1c6836a",
+      "url": "https://zenodo.org/records/21488583/files/joung-tfatlas-cfo-post-state-v1.zip?download=1"
+    }
+  },
+  "zenodo_record": "https://zenodo.org/records/21488583",
+  "zenodo_doi": "10.5281/zenodo.21488583"
+}

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Mapping
 from typing import Dict, List, Optional, Tuple
 
 import torch
@@ -16,52 +15,6 @@ from torch_geometric.nn import HGTConv, Linear
 from regulus.graph.schema import CELLTYPE_CFO, CELLTYPE_TF, GENE_CFO, TF_GENE
 
 logger = logging.getLogger(__name__)
-
-_OBSOLETE_CHECKPOINT_PREFIXES = (
-    "recon_decoders.go_tf.",
-)
-
-_LEGACY_RELATION_IDS = {
-    "gene__in__go": "gene__annotated_to__go",
-    "celltype__express__tf": "celltype__scenic_activity__tf",
-    "celltype__activates__go": "celltype__llm_context__go",
-    "tf__regulates__go": "tf__llm_regulates__go",
-}
-
-
-def compatible_graph_state_dict(
-    state_dict: Mapping[str, torch.Tensor],
-    *,
-    canonical_relations: bool = True,
-) -> Dict[str, torch.Tensor]:
-    """Drop retired decoder parameters and optionally migrate HGT relation keys."""
-    compatible = {
-        key: value
-        for key, value in state_dict.items()
-        if not key.startswith(_OBSOLETE_CHECKPOINT_PREFIXES)
-    }
-    if not canonical_relations:
-        return compatible
-    migrated = {}
-    for key, value in compatible.items():
-        for legacy_id, canonical_id in _LEGACY_RELATION_IDS.items():
-            key = key.replace(f".p_rel.{legacy_id}", f".p_rel.{canonical_id}")
-        migrated[key] = value
-    return migrated
-
-
-def load_graph_state_dict(
-    model: nn.Module,
-    state_dict: Mapping[str, torch.Tensor],
-) -> None:
-    """Load current or paper-era graph weights into the canonical model."""
-    filtered = compatible_graph_state_dict(state_dict, canonical_relations=False)
-    compatible = compatible_graph_state_dict(state_dict, canonical_relations=True)
-    dropped = sorted(set(state_dict) - set(filtered))
-    model.load_state_dict(compatible, strict=True)
-    if dropped:
-        logger.info("Ignored %d retired TF-CFO decoder parameters", len(dropped))
-
 
 class HeteroRegulatorNet(nn.Module):
     """HGT encoder with four relation-reconstruction objectives."""
@@ -108,13 +61,12 @@ class HeteroRegulatorNet(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
         if use_reconstruction:
-            # These private keys remain stable so paper-era checkpoints load directly.
             self.recon_decoders = nn.ModuleDict(
                 {
                     "tf_gene": BilinearDecoder(hidden_dim),
-                    "gene_go": BilinearDecoder(hidden_dim),
+                    "gene_cfo": BilinearDecoder(hidden_dim),
                     "celltype_tf": BilinearDecoder(hidden_dim),
-                    "celltype_go": BilinearDecoder(hidden_dim),
+                    "celltype_cfo": BilinearDecoder(hidden_dim),
                 }
             )
         else:
@@ -221,9 +173,9 @@ class HeteroRegulatorNet(nn.Module):
 
         relation_tasks = (
             (TF_GENE, "tf_gene_recon", "tf_gene", "tf", "gene"),
-            (GENE_CFO, "gene_go_recon", "gene_go", "gene", "go"),
+            (GENE_CFO, "gene_cfo_recon", "gene_cfo", "gene", "cfo"),
             (CELLTYPE_TF, "celltype_tf_recon", "celltype_tf", "celltype", "tf"),
-            (CELLTYPE_CFO, "celltype_go_recon", "celltype_go", "celltype", "go"),
+            (CELLTYPE_CFO, "celltype_cfo_recon", "celltype_cfo", "celltype", "cfo"),
         )
         return {
             output_key: self.recon_decoders[decoder_key](

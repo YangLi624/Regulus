@@ -16,27 +16,26 @@ from regulus.graph.schema import MESSAGE_PASSING_EDGE_TYPES
 logger = logging.getLogger(__name__)
 
 DEFAULT_GRAPH_ASSET_DIR = Path("assets/graph/regulus_graph_v1")
-LEGACY_GRAPH_ASSET_DIR = Path("data/processed")
 DEFAULT_MANIFEST_NAME = "manifest.json"
 
 GRAPH_ASSET_FILES = {
     "metadata.json": "graph_metadata",
     "edges/edges_tf_gene.csv": "tf_gene_edges",
-    "edges/edges_gene_go.csv": "gene_cfo_edges",
+    "edges/edges_gene_cfo.csv": "gene_cfo_edges",
     "edges/edges_celltype_tf.csv": "celltype_tf_scenic_activity",
-    "edges/edges_celltype_go.csv": "celltype_cfo_llm_context",
-    "edges/edges_tf_go_llm.csv": "tf_cfo_llm_regulates",
+    "edges/edges_celltype_cfo.csv": "celltype_cfo_llm_context",
+    "edges/edges_tf_cfo_llm.csv": "tf_cfo_llm_regulates",
     "embeddings/tf_family_onehot.npy": "tf_family_features",
     "embeddings/tf_celltype_expression.npy": "tf_celltype_activity_features",
     "embeddings/gene_geneformer_embeddings.npy": "gene_geneformer_features",
     "embeddings/celltype_gene_expression_pca.npy": "celltype_expression_features",
-    "embeddings/go_text_embeddings.npy": "cfo_text_features",
-    "embeddings/go_gene_counts.npy": "cfo_gene_count_features",
+    "embeddings/cfo_text_embeddings.npy": "cfo_text_features",
+    "embeddings/cfo_gene_counts.npy": "cfo_gene_count_features",
     "embeddings/gene_order.txt": "gene_order",
     "nodes/nodes_tf.csv": "tf_node_table",
     "nodes/nodes_gene.csv": "gene_node_table",
     "nodes/nodes_celltype.csv": "celltype_node_table",
-    "nodes/nodes_go.csv": "cfo_node_table",
+    "nodes/nodes_cfo.csv": "cfo_node_table",
     "universes/gene_universe.csv": "gene_universe",
     "universes/tf_universe.csv": "tf_universe",
 }
@@ -46,23 +45,10 @@ def resolve_graph_asset_dir(
     config: Optional[Mapping[str, Any]] = None,
     override: Optional[str | Path] = None,
 ) -> Path:
-    """Resolve a graph asset root, accepting the retired processed_dir key."""
+    """Resolve the graph asset root from a configuration or explicit override."""
     data_config = (config or {}).get("data", {})
-    configured = data_config.get("graph_asset_dir") or data_config.get("processed_dir")
+    configured = data_config.get("graph_asset_dir")
     candidate = Path(override or configured or DEFAULT_GRAPH_ASSET_DIR).expanduser()
-    if (
-        override is None
-        and configured is None
-        and candidate == DEFAULT_GRAPH_ASSET_DIR
-        and not candidate.exists()
-        and LEGACY_GRAPH_ASSET_DIR.exists()
-    ):
-        logger.warning(
-            "Using legacy graph asset directory %s; migrate to %s",
-            LEGACY_GRAPH_ASSET_DIR,
-            DEFAULT_GRAPH_ASSET_DIR,
-        )
-        return LEGACY_GRAPH_ASSET_DIR
     return candidate
 
 
@@ -93,7 +79,6 @@ def build_graph_asset_manifest(
     *,
     source_commit: Optional[str] = None,
     source_tree_dirty: Optional[bool] = None,
-    paper_checkpoint_sha256: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Create a manifest for canonical assets and retained provenance files."""
     root = Path(graph_asset_dir)
@@ -122,20 +107,18 @@ def build_graph_asset_manifest(
     manifest: Dict[str, Any] = {
         "asset_id": "regulus-graph-v1",
         "schema_version": "1.0",
-        "source_commit": source_commit,
-        "source_tree_dirty": source_tree_dirty,
         "asset_sha256": combined.hexdigest(),
         "public_node_labels": {
             "tf": "TF",
             "gene": "Gene",
             "celltype": "Cell type",
-            "go": "CFO",
+            "cfo": "CFO",
         },
         "node_counts": {
             "tf": metadata["n_tfs"],
             "gene": metadata["n_genes"],
             "celltype": metadata["n_celltypes"],
-            "cfo": metadata["n_gos"],
+            "cfo": metadata["n_cfos"],
         },
         "relations": [list(edge_type) for edge_type in MESSAGE_PASSING_EDGE_TYPES],
         "precomputed_build_inputs": [
@@ -145,12 +128,11 @@ def build_graph_asset_manifest(
             "embeddings/gene_order.txt",
         ],
         "files": files,
-        "paper_checkpoint": {
-            "authority": "server benchmark checkpoint",
-            "filename": "best_model.pt",
-            "sha256": paper_checkpoint_sha256,
-        },
     }
+    if source_commit is not None:
+        manifest["source_commit"] = source_commit
+    if source_tree_dirty is not None:
+        manifest["source_tree_dirty"] = source_tree_dirty
     return manifest
 
 
@@ -159,14 +141,12 @@ def write_graph_asset_manifest(
     *,
     source_commit: Optional[str] = None,
     source_tree_dirty: Optional[bool] = None,
-    paper_checkpoint_sha256: Optional[str] = None,
 ) -> Path:
     root = Path(graph_asset_dir)
     manifest = build_graph_asset_manifest(
         root,
         source_commit=source_commit,
         source_tree_dirty=source_tree_dirty,
-        paper_checkpoint_sha256=paper_checkpoint_sha256,
     )
     output = root / DEFAULT_MANIFEST_NAME
     output.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")

@@ -1,8 +1,4 @@
-"""Canonical relation names for the Regulus graph.
-
-The tensor node key ``go`` is retained for checkpoint compatibility. Public
-interfaces describe those selected GO biological-process nodes as CFO nodes.
-"""
+"""Canonical node and relation names for the Regulus graph."""
 
 from __future__ import annotations
 
@@ -11,12 +7,12 @@ from typing import Final
 EdgeType = tuple[str, str, str]
 
 TF_GENE: Final[EdgeType] = ("tf", "regulates", "gene")
-GENE_CFO: Final[EdgeType] = ("gene", "annotated_to", "go")
+GENE_CFO: Final[EdgeType] = ("gene", "annotated_to", "cfo")
 CELLTYPE_TF: Final[EdgeType] = ("celltype", "scenic_activity", "tf")
-CELLTYPE_CFO: Final[EdgeType] = ("celltype", "llm_context", "go")
-TF_CFO_LLM: Final[EdgeType] = ("tf", "llm_regulates", "go")
+CELLTYPE_CFO: Final[EdgeType] = ("celltype", "llm_context", "cfo")
+TF_CFO_LLM: Final[EdgeType] = ("tf", "llm_regulates", "cfo")
 
-# Relation order is part of the HGT checkpoint contract. Do not reorder.
+# Keep relation order stable across training and inference.
 MESSAGE_PASSING_EDGE_TYPES: Final[tuple[EdgeType, ...]] = (
     TF_GENE,
     GENE_CFO,
@@ -33,21 +29,9 @@ TRAINED_EDGE_TYPES: Final[tuple[EdgeType, ...]] = (
     CELLTYPE_CFO,
 )
 
-LEGACY_EDGE_TYPES: Final[tuple[EdgeType, ...]] = (
-    ("tf", "regulates", "gene"),
-    ("gene", "in", "go"),
-    ("celltype", "express", "tf"),
-    ("celltype", "activates", "go"),
-    ("tf", "regulates", "go"),
-)
-
-LEGACY_TO_CANONICAL: Final[dict[EdgeType, EdgeType]] = dict(
-    zip(LEGACY_EDGE_TYPES, MESSAGE_PASSING_EDGE_TYPES)
-)
-
 PUBLIC_NODE_LABELS: Final[dict[str, str]] = {
     "tf": "TF",
     "gene": "Gene",
     "celltype": "CellType",
-    "go": "CFO",
+    "cfo": "CFO",
 }

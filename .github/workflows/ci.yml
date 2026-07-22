@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install package
+        run: pip install -e ".[dev]"
+
+      - name: Unit and contract tests (CPU)
+        run: pytest tests -q --tb=short
+
+      - name: CLI help smoke
+        run: |
+          regulus --help
+          regulus graph-train --help
+          regulus perturb-train --help
+          regulus predict --help
+          regulus explain --help
+          regulus manipulate --help

@@ -30,8 +30,6 @@ class HeteroDataBuilder:
         validate_hashes: bool = False,
     ) -> None:
         self.graph_asset_dir = Path(graph_asset_dir)
-        # Compatibility alias for downstream code written before graph assets were versioned.
-        self.processed_dir = self.graph_asset_dir
         self.manifest = None
         if manifest_name:
             self.manifest = validate_graph_asset(
@@ -45,7 +43,7 @@ class HeteroDataBuilder:
             "tf": self.metadata["n_tfs"],
             "gene": self.metadata["n_genes"],
             "celltype": self.metadata["n_celltypes"],
-            "go": self.metadata["n_gos"],
+            "cfo": self.metadata["n_cfos"],
         }
 
     def _load_array(self, relative_path: str, expected_rows: int) -> np.ndarray:
@@ -85,14 +83,14 @@ class HeteroDataBuilder:
                 ),
                 dtype=torch.float32,
             ),
-            "go": torch.as_tensor(
+            "cfo": torch.as_tensor(
                 np.concatenate(
                     [
                         self._load_array(
-                            "embeddings/go_text_embeddings.npy", self.node_counts["go"]
+                            "embeddings/cfo_text_embeddings.npy", self.node_counts["cfo"]
                         ),
                         self._load_array(
-                            "embeddings/go_gene_counts.npy", self.node_counts["go"]
+                            "embeddings/cfo_gene_counts.npy", self.node_counts["cfo"]
                         ),
                     ],
                     axis=1,
@@ -115,10 +113,10 @@ class HeteroDataBuilder:
     def _load_edges(self) -> Dict:
         edge_files = (
             (TF_GENE, "edges_tf_gene.csv", True),
-            (GENE_CFO, "edges_gene_go.csv", True),
+            (GENE_CFO, "edges_gene_cfo.csv", True),
             (CELLTYPE_TF, "edges_celltype_tf.csv", True),
-            (CELLTYPE_CFO, "edges_celltype_go.csv", True),
-            (TF_CFO_LLM, "edges_tf_go_llm.csv", False),
+            (CELLTYPE_CFO, "edges_celltype_cfo.csv", True),
+            (TF_CFO_LLM, "edges_tf_cfo_llm.csv", False),
         )
         edges = {}
         for edge_type, filename, required in edge_files:
@@ -129,13 +127,8 @@ class HeteroDataBuilder:
                 raise FileNotFoundError(path)
         return edges
 
-    def build_hetero_data(
-        self,
-        split_type: Optional[str] = None,
-        data_splitter: Optional[Any] = None,
-    ) -> HeteroData:
-        """Build the full graph; split arguments remain for API compatibility."""
-        del split_type, data_splitter
+    def build_hetero_data(self) -> HeteroData:
+        """Build the complete heterogeneous graph."""
         data = HeteroData()
         for node_type, features in self._load_node_features().items():
             data[node_type].x = features

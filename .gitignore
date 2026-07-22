@@ -1,11 +1,90 @@
+# Python
 __pycache__/
 *.py[cod]
-.pytest_cache/
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
 *.egg-info/
-build/
 dist/
-outputs/
+build/
 
-# Graph data and checkpoints are distributed through Zenodo.
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Large data files
+data/raw/*.csv
+data/raw/*.obo
+data/raw/*.json
+data/processed/*.pt
+data/processed/*.csv
+data/processed/**/*.csv
+data/graph_build_intermediate/
+tasks/github_release/public_graph_repo/
+tasks/github_release/zenodo_graph_asset_staging/
+tasks/github_release/zenodo_release_staging/
+tasks/github_release/data/
+tasks/github_release/intermediate/
+tasks/github_release/results/bundle_archives/
+tasks/github_release/results/bundles/
+tasks/github_release/results/release_models/
+tasks/github_release/results/graph/*.pt
+
+# Versioned graph releases are deposited externally; Git tracks only their manifest.
 assets/graph/regulus_graph_v1/*
 !assets/graph/regulus_graph_v1/manifest.json
+assets/graph/**/cache/
+
+# Model weights and generated outputs
+outputs/checkpoints/*.pt
+outputs/*.pt
+outputs/predictions/*.csv
+outputs/figures/*.png
+outputs/figures/*.pdf
+outputs/inverse_baselines/
+
+# Benchmark model weights and caches
+tasks/03_inverse_baselines/**/__pycache__/
+tasks/03_inverse_baselines/cellfm/cellfm_ckpt/
+tasks/03_inverse_baselines/scgpt/scGPT_human/best_model.pt
+
+# Logs
+logs/
+*.log
+
+# Operating-system files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+temp/
+tmp/
+
+# External method repositories
+CellNavi-main
+GeneAgent-main
+LyMOI-main
+TxGNN-main
+
+# Keep empty output directories in the source tree
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/processed/edges/.gitkeep
+!data/processed/nodes/.gitkeep
+!data/processed/embeddings/.gitkeep
+!outputs/.gitkeep
+!outputs/checkpoints/.gitkeep
+!outputs/predictions/.gitkeep
+!outputs/figures/.gitkeep
+!logs/.gitkeep

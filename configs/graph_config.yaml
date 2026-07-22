@@ -10,32 +10,29 @@ model:
   dropout: 0.2
   use_reconstruction: true
   use_gradient_checkpointing: true
-  node_types: [tf, gene, celltype, go]
-  # Relation order is part of the paper-checkpoint compatibility contract.
-  # The internal node key remains "go"; public documentation calls these nodes CFOs.
+  node_types: [tf, gene, celltype, cfo]
   edge_types:
     - [tf, regulates, gene]
-    - [gene, annotated_to, go]
+    - [gene, annotated_to, cfo]
     - [celltype, scenic_activity, tf]
-    - [celltype, llm_context, go]
-    - [tf, llm_regulates, go]
+    - [celltype, llm_context, cfo]
+    - [tf, llm_regulates, cfo]
 
 loss:
   recon_weight: 0.25
-  # Absolute subweights preserve the four paper-model contributions after the
-  # retired direct TF-CFO objective is removed; they intentionally sum to 0.8.
+  # Relation-specific reconstruction weights are combined under recon_weight.
   tf_gene_recon_weight: 0.2
-  gene_go_recon_weight: 0.2
+  gene_cfo_recon_weight: 0.2
   celltype_tf_recon_weight: 0.2
-  celltype_go_recon_weight: 0.2
+  celltype_cfo_recon_weight: 0.2
   contrast_weight: 0.25
   contrast_temperature: 0.07
   contrast_num_negatives: 4096
   contrast_batch_size: 2048
   contrast_skip_gene: false
   cross_type_align_weight: 0.5
-  align_celltype_go_weight: 0.25
-  align_gene_go_weight: 0.20
+  align_celltype_cfo_weight: 0.25
+  align_gene_cfo_weight: 0.20
   align_tf_gene_weight: 0.15
   align_celltype_tf_weight: 0.15
 

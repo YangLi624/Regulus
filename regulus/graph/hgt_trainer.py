@@ -13,12 +13,16 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.amp import autocast
-from torch.cuda.amp import GradScaler
 from torch_geometric.data import HeteroData
 
-from regulus.graph.model import load_graph_state_dict
-from regulus.graph.schema import CELLTYPE_CFO, CELLTYPE_TF, GENE_CFO, TF_GENE, TRAINED_EDGE_TYPES
+from regulus.graph.schema import (
+    CELLTYPE_CFO,
+    CELLTYPE_TF,
+    GENE_CFO,
+    TF_GENE,
+    TRAINED_EDGE_TYPES,
+)
+from regulus.utils.amp import autocast_context, make_grad_scaler
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +67,11 @@ class Trainer:
             patience=5,
             min_lr=1e-6,
         )
-        self.scaler = GradScaler() if use_mixed_precision else None
+        self.scaler = (
+            make_grad_scaler(enabled=self.device.type == "cuda")
+            if use_mixed_precision
+            else None
+        )
 
         self.current_epoch = 0
         self.best_val_loss = float("inf")
@@ -76,13 +84,13 @@ class Trainer:
         self.train_align_losses: List[float] = []
         self.val_align_losses: List[float] = []
         self.train_tf_gene_losses: List[float] = []
-        self.train_gene_go_losses: List[float] = []
+        self.train_gene_cfo_losses: List[float] = []
         self.train_celltype_tf_losses: List[float] = []
-        self.train_celltype_go_losses: List[float] = []
+        self.train_celltype_cfo_losses: List[float] = []
         self.val_tf_gene_losses: List[float] = []
-        self.val_gene_go_losses: List[float] = []
+        self.val_gene_cfo_losses: List[float] = []
         self.val_celltype_tf_losses: List[float] = []
-        self.val_celltype_go_losses: List[float] = []
+        self.val_celltype_cfo_losses: List[float] = []
 
         logger.info(
             "Initialized Trainer with lr=%s, mixed_precision=%s, patience=%s",
@@ -114,7 +122,7 @@ class Trainer:
 
         binary_tasks = (
             (TF_GENE, "tf_gene_labels", "tf", "gene"),
-            (GENE_CFO, "gene_go_labels", "gene", "go"),
+            (GENE_CFO, "gene_cfo_labels", "gene", "cfo"),
         )
         for edge_type, target_key, src_type, dst_type in binary_tasks:
             if edge_type not in data.edge_types:
@@ -141,7 +149,7 @@ class Trainer:
 
         continuous_tasks = (
             (CELLTYPE_TF, "celltype_tf_recon", "celltype_tf_labels"),
-            (CELLTYPE_CFO, "celltype_go_recon", "celltype_go_labels"),
+            (CELLTYPE_CFO, "celltype_cfo_recon", "celltype_cfo_labels"),
         )
         for edge_type, prediction_key, target_key in continuous_tasks:
             if edge_type not in data.edge_types:
@@ -273,9 +281,9 @@ class Trainer:
             predictions["node_embeddings"], edge_indices, edge_weights
         )
         weighted = (
-            losses.get("align_celltype_go", zero) * self.loss_fn.align_celltype_go_weight
+            losses.get("align_celltype_cfo", zero) * self.loss_fn.align_celltype_cfo_weight
             + losses.get("align_tf_gene", zero) * self.loss_fn.align_tf_gene_weight
-            + losses.get("align_gene_go", zero) * self.loss_fn.align_gene_go_weight
+            + losses.get("align_gene_cfo", zero) * self.loss_fn.align_gene_cfo_weight
             + losses.get("align_celltype_tf", zero) * self.loss_fn.align_celltype_tf_weight
         )
         return losses, weighted
@@ -284,7 +292,7 @@ class Trainer:
         self.model.train()
         data = data.to(self.device)
         if self.use_mixed_precision:
-            with autocast("cuda" if torch.cuda.is_available() else "cpu"):
+            with autocast_context(self.device):
                 predictions, losses, total_loss = self._base_forward(data)
                 align_losses, align_total = self._alignment_loss(data, predictions)
                 total_loss = total_loss + self.loss_fn.cross_type_align_weight * align_total
@@ -318,7 +326,7 @@ class Trainer:
         with torch.no_grad():
             data = data.to(self.device)
             if self.use_mixed_precision:
-                with autocast("cuda" if torch.cuda.is_available() else "cpu"):
+                with autocast_context(self.device):
                     predictions, losses, total_loss = self._base_forward(data)
                     align_losses, align_total = self._alignment_loss(data, predictions)
                     total_loss = total_loss + self.loss_fn.cross_type_align_weight * align_total
@@ -356,13 +364,13 @@ class Trainer:
             "train_align_loss": self.train_align_losses,
             "val_align_loss": self.val_align_losses,
             "train_tf_gene_loss": self.train_tf_gene_losses,
-            "train_gene_go_loss": self.train_gene_go_losses,
+            "train_gene_cfo_loss": self.train_gene_cfo_losses,
             "train_celltype_tf_loss": self.train_celltype_tf_losses,
-            "train_celltype_go_loss": self.train_celltype_go_losses,
+            "train_celltype_cfo_loss": self.train_celltype_cfo_losses,
             "val_tf_gene_loss": self.val_tf_gene_losses,
-            "val_gene_go_loss": self.val_gene_go_losses,
+            "val_gene_cfo_loss": self.val_gene_cfo_losses,
             "val_celltype_tf_loss": self.val_celltype_tf_losses,
-            "val_celltype_go_loss": self.val_celltype_go_losses,
+            "val_celltype_cfo_loss": self.val_celltype_cfo_losses,
             "best_val_loss": self.best_val_loss,
             "total_epochs": len(self.train_losses),
         }
@@ -386,14 +394,9 @@ class Trainer:
 
     def load_checkpoint(self, checkpoint_path: str) -> None:
         checkpoint = torch.load(checkpoint_path, map_location=self.device)
-        load_graph_state_dict(self.model, checkpoint["model_state_dict"])
-        try:
-            self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-            self.scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
-        except ValueError:
-            logger.warning(
-                "Loaded graph weights but not the paper-era optimizer state because retired decoder parameters changed its shape"
-            )
+        self.model.load_state_dict(checkpoint["model_state_dict"], strict=True)
+        self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        self.scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
         if self.scaler is not None and "scaler_state_dict" in checkpoint:
             self.scaler.load_state_dict(checkpoint["scaler_state_dict"])
         self.current_epoch = checkpoint.get("epoch", -1) + 1
@@ -415,7 +418,7 @@ class Trainer:
     def _reconstruction_total(metrics: Dict[str, float], prefix: str) -> float:
         return sum(
             metrics.get(f"{prefix}_{key}_recon", 0.0)
-            for key in ("tf_gene", "gene_go", "celltype_tf", "celltype_go")
+            for key in ("tf_gene", "gene_cfo", "celltype_tf", "celltype_cfo")
         )
 
     def fit(
@@ -441,17 +444,17 @@ class Trainer:
             self.val_losses.append(val_loss)
             train_relations = (
                 self.train_tf_gene_losses,
-                self.train_gene_go_losses,
+                self.train_gene_cfo_losses,
                 self.train_celltype_tf_losses,
-                self.train_celltype_go_losses,
+                self.train_celltype_cfo_losses,
             )
             val_relations = (
                 self.val_tf_gene_losses,
-                self.val_gene_go_losses,
+                self.val_gene_cfo_losses,
                 self.val_celltype_tf_losses,
-                self.val_celltype_go_losses,
+                self.val_celltype_cfo_losses,
             )
-            relation_keys = ("tf_gene", "gene_go", "celltype_tf", "celltype_go")
+            relation_keys = ("tf_gene", "gene_cfo", "celltype_tf", "celltype_cfo")
             for values, key in zip(train_relations, relation_keys):
                 values.append(train_metrics.get(f"train_{key}_recon", 0.0))
             for values, key in zip(val_relations, relation_keys):

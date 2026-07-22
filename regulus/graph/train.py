@@ -48,15 +48,15 @@ def run_graph_training(
         validate_hashes=data_config.get("validate_hashes", True),
     )
     stats = builder.get_data_statistics()
-    train_data = builder.build_hetero_data(split_type=None, data_splitter=None)
-    val_data = builder.build_hetero_data(split_type=None, data_splitter=None)
+    train_data = builder.build_hetero_data()
+    val_data = builder.build_hetero_data()
 
     if TF_CFO_LLM in train_data.edge_types:
         edge_count = train_data[TF_CFO_LLM].edge_index.shape[1]
         logger.info("TF->CFO LLM evidence edges: %s", f"{edge_count:,}")
 
     model_config = config["model"]
-    node_types = model_config.get("node_types", ["tf", "gene", "celltype", "go"])
+    node_types = model_config.get("node_types", ["tf", "gene", "celltype", "cfo"])
     edge_types = [
         tuple(edge_type)
         for edge_type in model_config.get("edge_types", MESSAGE_PASSING_EDGE_TYPES)
@@ -104,9 +104,13 @@ def run_graph_training(
         os.path.join(output_dir, f"training_history_{output_suffix}.json")
     )
 
+    best_checkpoint = Path(trainer.save_dir) / "best_model.pt"
+    if best_checkpoint.exists():
+        trainer.load_checkpoint(str(best_checkpoint))
+
     model.eval()
     with torch.no_grad():
-        full_data = builder.build_hetero_data(split_type=None, data_splitter=None).to(device)
+        full_data = builder.build_hetero_data().to(device)
         x_dict = {
             node_type: full_data[node_type].x
             for node_type in model.node_types

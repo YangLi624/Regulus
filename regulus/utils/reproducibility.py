@@ -1,19 +1,15 @@
-"""实验可复现性：统一随机种子（替代独立 seeds.py 脚本）。"""
+"""Random-state configuration for Regulus training."""
 
 from __future__ import annotations
 
-import logging
-import os
 import random
 
 import numpy as np
 import torch
 
-logger = logging.getLogger(__name__)
-
 
 def set_random_seeds(seed: int = 42) -> None:
-    """设置 Python / NumPy / PyTorch 随机种子。"""
+    """Seed Python, NumPy, and PyTorch in the current process."""
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -21,5 +17,3 @@ def set_random_seeds(seed: int = 42) -> None:
         torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
-    os.environ["PYTHONHASHSEED"] = str(seed)
-    logger.info("Set all random seeds to %s", seed)

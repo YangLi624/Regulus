@@ -20,35 +20,33 @@ class HeteroLoss(nn.Module):
     def __init__(
         self,
         tf_gene_recon_weight: float = 0.2,
-        gene_go_recon_weight: float = 0.2,
+        gene_cfo_recon_weight: float = 0.2,
         celltype_tf_recon_weight: float = 0.2,
-        celltype_go_recon_weight: float = 0.2,
+        celltype_cfo_recon_weight: float = 0.2,
         contrast_weight: float = 0.25,
         contrast_temperature: float = 0.07,
         contrast_num_negatives: int = 4096,
         contrast_batch_size: int = 2048,
         contrast_skip_gene: bool = False,
         cross_type_align_weight: float = 0.5,
-        align_celltype_go_weight: float = 0.25,
+        align_celltype_cfo_weight: float = 0.25,
         align_tf_gene_weight: float = 0.15,
-        align_gene_go_weight: float = 0.20,
+        align_gene_cfo_weight: float = 0.20,
         align_celltype_tf_weight: float = 0.15,
         recon_weight: float = 0.25,
     ) -> None:
         super().__init__()
         self.recon_weight = recon_weight
 
-        # These are absolute subweights. Their 0.8 sum preserves the four
-        # unchanged paper-model contributions after retiring direct TF-CFO supervision.
         self.tf_gene_recon_weight = tf_gene_recon_weight
-        self.gene_go_recon_weight = gene_go_recon_weight
+        self.gene_cfo_recon_weight = gene_cfo_recon_weight
         self.celltype_tf_recon_weight = celltype_tf_recon_weight
-        self.celltype_go_recon_weight = celltype_go_recon_weight
+        self.celltype_cfo_recon_weight = celltype_cfo_recon_weight
 
         self.cross_type_align_weight = cross_type_align_weight
-        self.align_celltype_go_weight = align_celltype_go_weight
+        self.align_celltype_cfo_weight = align_celltype_cfo_weight
         self.align_tf_gene_weight = align_tf_gene_weight
-        self.align_gene_go_weight = align_gene_go_weight
+        self.align_gene_cfo_weight = align_gene_cfo_weight
         self.align_celltype_tf_weight = align_celltype_tf_weight
 
         self.contrast_weight = contrast_weight
@@ -90,9 +88,9 @@ class HeteroLoss(nn.Module):
 
         if CELLTYPE_CFO in edge_indices and CELLTYPE_CFO in edge_weights:
             edges = edge_indices[CELLTYPE_CFO]
-            losses["align_celltype_go"] = self._cosine_target_loss(
+            losses["align_celltype_cfo"] = self._cosine_target_loss(
                 h_dict["celltype"][edges[0]],
-                h_dict["go"][edges[1]],
+                h_dict["cfo"][edges[1]],
                 edge_weights[CELLTYPE_CFO],
             )
 
@@ -108,9 +106,9 @@ class HeteroLoss(nn.Module):
         if GENE_CFO in edge_indices:
             edges = edge_indices[GENE_CFO]
             target = torch.full_like(edges[0], 0.8, dtype=h_dict["gene"].dtype)
-            losses["align_gene_go"] = self._cosine_target_loss(
+            losses["align_gene_cfo"] = self._cosine_target_loss(
                 h_dict["gene"][edges[0]],
-                h_dict["go"][edges[1]],
+                h_dict["cfo"][edges[1]],
                 target,
             )
 
@@ -148,7 +146,7 @@ class HeteroLoss(nn.Module):
         total_loss: torch.Tensor | float = 0.0
         tasks = (
             ("tf_gene_recon", "tf_gene_labels", self.tf_gene_recon_weight, "binary"),
-            ("gene_go_recon", "gene_go_labels", self.gene_go_recon_weight, "binary"),
+            ("gene_cfo_recon", "gene_cfo_labels", self.gene_cfo_recon_weight, "binary"),
             (
                 "celltype_tf_recon",
                 "celltype_tf_labels",
@@ -156,9 +154,9 @@ class HeteroLoss(nn.Module):
                 "continuous",
             ),
             (
-                "celltype_go_recon",
-                "celltype_go_labels",
-                self.celltype_go_recon_weight,
+                "celltype_cfo_recon",
+                "celltype_cfo_labels",
+                self.celltype_cfo_recon_weight,
                 "continuous",
             ),
         )

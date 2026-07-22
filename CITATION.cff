@@ -1,15 +1,19 @@
 cff-version: 1.2.0
-message: "If you use the Regulus graph model, please cite this software release."
-title: "Regulus"
-version: 0.1.0
+message: "If you use Regulus, please cite this software and the accompanying manuscript when available."
+title: "Regulus: interpretable perturbation driver inference and virtual functional manipulation"
 type: software
+version: 0.1.0
+doi: 10.5281/zenodo.21488583
+date-released: 2026-07-22
 license: MIT
 authors:
   - family-names: "Li"
     given-names: "Yang"
 repository-code: "https://github.com/YangLi624/Regulus"
+url: "https://github.com/YangLi624/Regulus"
 keywords:
   - single-cell
-  - heterogeneous graph
+  - perturbation
   - gene regulatory network
   - cellular function ontology
+  - heterogeneous graph transformer

@@ -1,0 +1,44 @@
+data:
+  dataset_dir: data/tian_crispra
+  train_data: Tian_CRISPRa_train_random_cfo.h5ad
+  test_data: Tian_CRISPRa_test_random_cfo.h5ad
+  graph_asset_dir: assets/graph/regulus_graph_v1
+  gene_universe: assets/graph/regulus_graph_v1/universes/gene_universe.csv
+
+model:
+  representation: post_state
+  channels: gene_cfo
+  head: prototype_matching
+  graph_checkpoint: models/regulus_graph_v1.pt
+  d_cond: 128
+  gene_topk: 2048
+  cfo_topk: 256
+  layers: 2
+  heads: 4
+  dropout: 0.1
+  use_bilinear: true
+  learnable_temperature: true
+  temperature_init: 1.0
+
+training:
+  loss: cross_entropy
+  learning_rate: 0.001
+  batch_size: 128
+  epochs: 100
+  mixed_precision: true
+  grad_clip_norm: 1.0
+  checkpoint_interval: 5000
+  log_interval: 10
+  random_seed: 42
+  channel_schedule:
+    joint: 0.5
+    gene_only: 0.3
+    cfo_only: 0.2
+  lr_scheduler:
+    type: warmup_cosine
+    warmup_steps: 500
+    min_lr: 1.0e-6
+
+output_dir: outputs/tian_crispra
+checkpoint_dir: outputs/tian_crispra/checkpoints
+resume: false
