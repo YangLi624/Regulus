@@ -164,12 +164,9 @@ size.
   downloads, preprocessing, and a first prediction.
 - [Input data and model bundles](docs/user-guide/input-data-and-bundles.md):
   H5AD requirements, representations, model modes, and bundle contents.
-- [Advanced usage](docs/user-guide/advanced-usage.md): explanation,
-  manipulation, model training, graph training, asset validation, and bundle
-  construction.
-
-Graph construction and training are intentionally documented as advanced
-developer workflows. They are not required when using a released bundle.
+- [Explanation, manipulation, and training](docs/user-guide/advanced-usage.md):
+  attribution, virtual CFO editing, perturbation-model training, bundle
+  construction, graph training, and asset validation.
 
 ## Development
 

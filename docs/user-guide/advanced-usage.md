@@ -1,9 +1,8 @@
-# Advanced usage
+# Explanation, manipulation, and training
 
-This page covers interpretation, virtual function manipulation, model training,
-and graph-asset maintenance. A released bundle is sufficient for prediction,
-explanation, and manipulation; graph training is not part of the standard user
-workflow.
+This page covers interpretation, virtual function manipulation,
+perturbation-model training, bundle construction, graph training, and
+graph-asset maintenance.
 
 ## Explain predictions
 
@@ -136,9 +135,6 @@ The resulting directory is relocatable and records all paths relative to the
 bundle root.
 
 ## Train the heterogeneous graph
-
-Graph training is an advanced developer workflow. It is unnecessary when using
-a released model bundle.
 
 The graph trainer consumes one versioned asset root declared by
 `data.graph_asset_dir` in `configs/graph_config.yaml`:

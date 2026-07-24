@@ -44,8 +44,7 @@ python -m pip install -e ".[dev]"
 pytest -q
 ```
 
-The optional knowledge-building dependencies are not required for released
-model bundles. Install them only when rebuilding graph inputs:
+To rebuild graph inputs, install the knowledge-building dependencies:
 
 ```bash
 python -m pip install -e ".[knowledge]"
