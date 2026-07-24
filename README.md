@@ -34,10 +34,6 @@ The public model surface has three independent choices:
 | `channels` | `gene`, `cfo`, `gene_cfo` | Channels used to construct the trained model |
 | `head` | `mlp`, `prototype_matching` | Independent perturbation classifier |
 
-Regulus consumes the supplied matrices as-is. It does not infer control cells,
-calculate a control mean, derive fold changes, or substitute a zero baseline.
-A `delta` matrix must therefore be prepared before training or prediction.
-
 `channels: gene` routes to `GeneTokenTransformerEncoder`. `channels: cfo` and
 `channels: gene_cfo` route to `JointCrossTransformerEncoder`. A trained
 gene+CFO model supports runtime modes `joint`, `gene_only`, and `cfo_only`;
