@@ -105,10 +105,6 @@ scores for each input cell. A gene+CFO bundle supports `joint`, `gene_only`, and
 | `tian-crispra-post-state-v1` | Gene + CFO, post-state | Tian et al. CRISPRa profiles from human iPSC-derived neurons |
 | `joung-tfatlas-cfo-post-state-v1` | CFO only, post-state | Joung et al. TFAtlas profiles from transcription-factor overexpression during directed differentiation of human pluripotent stem cells |
 
-Released bundles are designed for direct use and method exploration. They are
-not article-reproduction packages or substitutes for dataset-specific
-validation.
-
 ## Input representations
 
 `post_state` bundles consume the supplied gene and CFO matrices as-is and do
