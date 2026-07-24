@@ -3,7 +3,7 @@ message: "If you use Regulus, please cite this software and the accompanying man
 title: "Regulus: interpretable perturbation driver inference and virtual functional manipulation"
 type: software
 version: 1.0.0
-doi: 10.5281/zenodo.21488583
+doi: 10.5281/zenodo.21522549
 date-released: 2026-07-24
 license: MIT
 authors:

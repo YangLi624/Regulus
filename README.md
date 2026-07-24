@@ -179,6 +179,8 @@ pytest -q
 ```
 
 Please cite Regulus using the metadata in
-[`CITATION.cff`](CITATION.cff). Model bundles and checksums are archived on
-[Zenodo](https://doi.org/10.5281/zenodo.21488583). Regulus is released under the
-[MIT License](LICENSE).
+[`CITATION.cff`](CITATION.cff); the v1.0.0 source archive is available on
+[Zenodo](https://doi.org/10.5281/zenodo.21522549). Model bundles, the frozen
+graph, and their checksums are archived separately on
+[Zenodo](https://doi.org/10.5281/zenodo.21488583). Regulus is released under
+the [MIT License](LICENSE).
