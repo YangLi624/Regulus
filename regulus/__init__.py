@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 __all__ = ["RegulusModel", "__version__"]
 
 if TYPE_CHECKING:

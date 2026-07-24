@@ -1,9 +1,4 @@
-"""Perturbation input semantics.
-
-Regulus does not derive deltas or baselines. The input matrix is consumed as
-provided and ``representation`` records whether it contains precomputed
-deltas or post-perturbation states.
-"""
+"""Perturbation input transformations."""
 
 from __future__ import annotations
 
@@ -22,6 +17,22 @@ def validate_input_matrix(values: np.ndarray, representation: str, *, name: str)
     if not np.isfinite(matrix).all():
         raise ValueError(f"{name} contains non-finite values")
     return matrix
+
+
+def subtract_control_mean(
+    values: np.ndarray,
+    control_mean: np.ndarray,
+    *,
+    name: str,
+) -> np.ndarray:
+    """Return values in delta space using the dataset control mean."""
+    matrix = validate_input_matrix(values, "delta", name=name)
+    baseline = validate_input_matrix(control_mean, "delta", name=f"{name} control mean")
+    if matrix.shape != baseline.shape:
+        raise ValueError(
+            f"{name} shape {matrix.shape} does not match control mean shape {baseline.shape}"
+        )
+    return validate_input_matrix(matrix - baseline, "delta", name=f"{name} delta")
 
 
 def apply_anchor_plus_delta(

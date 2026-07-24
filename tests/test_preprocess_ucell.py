@@ -3,6 +3,7 @@
 from pathlib import Path
 import sys
 import types
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -59,6 +60,7 @@ def test_compute_ucell_writes_compact_matrix_and_removes_columns(monkeypatch):
     adata.var_names = ["A", "B", "C"]
 
     def fake_compute(adata_arg, signatures, suffix="_UCell", n_jobs=1):
+        warnings.warn("fragmented", pd.errors.PerformanceWarning)
         adata_arg.obs["GO_0000001_UCell"] = [0.3, 0.4]
         adata_arg.obs["GO_0000002_UCell"] = [0.5, 0.6]
 
@@ -67,10 +69,13 @@ def test_compute_ucell_writes_compact_matrix_and_removes_columns(monkeypatch):
         "pyucell",
         types.SimpleNamespace(compute_ucell_scores=fake_compute),
     )
-    cfo_ids = compute_ucell_cfo_activity(
-        adata,
-        {"GO:0000001": ["A", "B"], "GO:0000002": ["C"]},
-    )
+    with warnings.catch_warnings(record=True) as recorded:
+        warnings.simplefilter("always")
+        cfo_ids = compute_ucell_cfo_activity(
+            adata,
+            {"GO:0000001": ["A", "B"], "GO:0000002": ["C"]},
+        )
+    assert not any(issubclass(item.category, pd.errors.PerformanceWarning) for item in recorded)
     assert cfo_ids == ["GO:0000001", "GO:0000002"]
     assert not any("UCell" in column for column in adata.obs.columns)
     np.testing.assert_allclose(

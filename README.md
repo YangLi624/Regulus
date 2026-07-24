@@ -1,109 +1,151 @@
 # Regulus
 
-Regulus links single-cell perturbation states to candidate transcriptional
-regulators through a frozen heterogeneous graph and a compact perturbation
-model. The released code covers graph training, perturbation training,
-prediction, attribution, and virtual CFO manipulation.
+Regulus is a function-centered framework for inverse driver inference from
+single-cell transcriptomic states. Instead of treating cellular function only
+as a post hoc enrichment result, Regulus represents gene expression, cellular
+function, candidate regulators, genes, and cellular contexts in a shared
+functional-regulatory manifold.
 
-## Installation
+Given an observed cellular state, Regulus can:
+
+- rank candidate transcription factor and gene drivers;
+- attribute predictions to gene and cellular-function inputs;
+- trace attributed features through regulator-gene-function evidence paths;
+- virtually edit selected cellular functions and quantify candidate rank shifts.
+
+The functional channel uses a compact cellular function ontology (CFO) derived
+from context-aware Gene Ontology terms. Its graph-pretrained representations
+combine reference-supported regulatory and annotation relationships,
+single-cell context priors, and literature-supported LLM context. Regulus
+outputs ranked hypotheses and traceable evidence; experimental validation is
+still required to establish causal regulation.
+
+## Quick start
+
+### 1. Install Regulus
+
+Regulus requires Python 3.10 or newer. A fresh environment is recommended:
 
 ```bash
-pip install .
+conda create -n regulus python=3.10 -y
+conda activate regulus
+
+git clone https://github.com/YangLi624/Regulus.git
+cd Regulus
+python -m pip install --upgrade pip
+python -m pip install .
+
 regulus --help
 ```
 
-## Graph model
+GPU users should install a PyTorch build compatible with their CUDA environment
+before `python -m pip install .`. See the
+[installation guide](docs/user-guide/getting-started.md#installation) for CPU,
+GPU, and development setup.
 
-The graph is trained from the versioned asset directory declared in
-`configs/graph_config.yaml`:
+### 2. Download a pretrained bundle
 
-```bash
-regulus graph-train --config configs/graph_config.yaml --output-suffix graph
-```
-
-The public graph asset contains node universes, node features, typed edges and
-a manifest. Intermediate preprocessing files are not required at runtime.
-
-## Perturbation model
-
-The public model surface has three independent choices:
-
-| Field | Values | Meaning |
-|---|---|---|
-| `representation` | `delta`, `post_state` | Semantic meaning of the supplied matrix |
-| `channels` | `gene`, `cfo`, `gene_cfo` | Channels used to construct the trained model |
-| `head` | `mlp`, `prototype_matching` | Independent perturbation classifier |
-
-Regulus consumes the supplied matrices as-is. It does not infer control cells,
-calculate a control mean, derive fold changes, or substitute a zero baseline.
-A `delta` matrix must therefore be prepared before training or prediction.
-
-`channels: gene` routes to `GeneTokenTransformerEncoder`. `channels: cfo` and
-`channels: gene_cfo` route to `JointCrossTransformerEncoder`. A trained
-gene+CFO model supports runtime modes `joint`, `gene_only`, and `cfo_only`;
-these modes never replace the trained encoder.
-
-Train with:
+Model weights and their matching graph assets are distributed as self-contained
+bundles rather than stored in the Python package:
 
 ```bash
-regulus perturb-train --config configs/perturb_config.yaml
+# List available bundles.
+regulus download
+
+# Download and verify one bundle.
+regulus download norman-post-state-v1 --output-dir bundles
 ```
 
-The release includes four pretrained-model recipes:
+Each download is checked against its published SHA-256 hash before extraction.
+The bundle contains the graph checkpoint, perturbation checkpoint, exact
+candidate order, graph asset, input semantics, and training configuration
+needed for inference.
 
-- `configs/perturb_norman_post_state.yaml`
-- `configs/perturb_schmidt_post_state.yaml`
-- `configs/perturb_tian_crispra_post_state.yaml`
-- `configs/perturb_joung_cfo_post_state.yaml`
+### 3. Prepare an H5AD file
 
-## H5AD input
+Regulus reads model gene inputs from `adata.X` using `adata.var_names`. Models
+with a CFO channel additionally require CFO activity scores, which may be
+computed from `adata.X` or a selected expression layer. Compute them with the
+matching bundle:
 
-Gene values are read from `adata.X` and aligned to `gene_universe.csv`.
-CFO-channel models additionally require `adata.obsm['X_cfo_activity']`.
-CFO identifiers are stored in `adata.uns['regulus_cfo_ids']`. Training files
-require `obs['perturbation']`; prediction files do not. Rows labelled `control` are
-excluded from supervised training and retained during prediction, explanation,
-and anchor construction. They are never used to transform another input row.
+```bash
+regulus preprocess \
+  -i examples/data/example_cells.h5ad \
+  -o outputs/example_cells.regulus.h5ad \
+  --bundle-path bundles/norman-post-state-v1
+```
 
-## Prediction
+Preprocessing preserves the gene matrix and adds:
+
+- `adata.obsm["X_cfo_activity"]`: UCell CFO activity scores;
+- `adata.uns["regulus_cfo_ids"]`: CFO identifiers in matrix-column order.
+
+### 4. Rank candidate drivers
 
 ```bash
 regulus predict \
-  -i prepared_cells.h5ad \
+  -i outputs/example_cells.regulus.h5ad \
   --bundle-path bundles/norman-post-state-v1 \
   --mode joint \
   --top-k 50 \
-  -o predictions.csv
+  -o outputs/predictions.csv
 ```
 
-The bundle stores the exact graph checkpoint, perturbation checkpoint,
-candidate order, graph asset, training configuration and input semantics needed
-to reconstruct the model without the training H5AD.
+The included H5AD is synthetic and intended only for interface validation.
+`outputs/predictions.csv` contains the top-ranked candidate drivers and model
+scores for each input cell. A gene+CFO bundle supports `joint`, `gene_only`, and
+`cfo_only` runtime modes; a CFO-only bundle supports only its declared modes.
 
-## Explanation
+## Choose a bundle
+
+| Bundle | Trained input | Intended starting point |
+|---|---|---|
+| `norman-post-state-v1` | Gene + CFO, post-state | Broad single-gene CRISPRa driver inference |
+| `schmidt-post-state-v1` | Gene + CFO, post-state | CRISPRa driver inference in an independent perturbation context |
+| `tian-crispra-post-state-v1` | Gene + CFO, post-state | CRISPRa prediction and downstream attribution workflows |
+| `joung-tfatlas-cfo-post-state-v1` | CFO only, post-state | CFO-centered inference and virtual function manipulation |
+
+Released bundles are designed for direct use and method exploration. They are
+not article-reproduction packages or substitutes for dataset-specific
+validation.
+
+## Input representations
+
+`post_state` bundles consume the supplied gene and CFO matrices as-is and do
+not require control cells.
+
+For a `delta` model, the input H5AD must contain rows where
+`obs["perturbation"] == "control"`. Regulus calculates the control mean and
+subtracts it from every gene row and, when present, every CFO row. Missing
+controls raise an error; Regulus never substitutes a zero baseline.
+
+See [Input data and model bundles](docs/user-guide/input-data-and-bundles.md)
+for the complete H5AD and bundle contracts.
+
+## Explain a prediction
 
 ```bash
 regulus explain \
-  -i prepared_cells.h5ad \
+  -i outputs/example_cells.regulus.h5ad \
   --bundle-path bundles/norman-post-state-v1 \
   --mode joint \
   --attribution-channel gene \
   --attribution-method gradient_x_input \
-  --obs-filter "cell_type == 'T cell'" \
   -o explain_out
 ```
 
-Outputs are `scores.csv`, long-form `attributions.csv`,
-`evidence_paths.jsonl`, and `explain_manifest.json`. By default both the
-attribution target and graph context use the top predicted driver. Increase
-`--top-k-candidates` when several predicted drivers should constrain the graph.
+The default explanation is centered on the top predicted driver. Outputs
+include prediction scores, long-form feature attributions, graph-constrained
+evidence paths, and a run manifest. Integrated gradients, CFO attribution,
+multiple candidate drivers, cell filtering, and an optional network plot are
+also available.
 
-## Virtual CFO manipulation
+## Manipulate a cellular function
 
 ```bash
 regulus manipulate \
   --bundle-path bundles/joung-tfatlas-cfo-post-state-v1 \
-  --anchor-h5ad prepared_cells.h5ad \
+  --anchor-h5ad outputs/example_cells.regulus.h5ad \
   --cfo-targets "peptide hormone secretion" \
   --cfo-delta 0.5 \
   --mode cfo_only \
@@ -111,24 +153,32 @@ regulus manipulate \
   -o manipulate_out
 ```
 
-Manipulation adds the requested value to the selected CFO coordinate of an
-anchor profile and reports candidate rank and score changes.
+This command adds the requested value to selected CFO coordinates of an anchor
+state and reports the resulting candidate score and rank changes. It is an in
+silico prioritization tool, not a direct prediction of experimental effect
+size.
 
-## Repository layout
+## Documentation
 
-| Path | Content |
-|---|---|
-| `regulus/graph/` | Graph schema, model and training code |
-| `regulus/perturb/` | Unified perturbation model, data and training code |
-| `regulus/explain/` | Attribution and evidence extraction |
-| `regulus/manipulate/` | Virtual CFO edit orchestration and target resolution |
-| `assets/graph/` | Versioned graph assets |
-| `configs/` | Graph and perturbation recipes |
-| `regulus/assets/bundles/` | Download catalog for pretrained bundles |
-| `tests/` | Unit and contract tests |
+- [Getting started](docs/user-guide/getting-started.md): installation,
+  downloads, preprocessing, and a first prediction.
+- [Input data and model bundles](docs/user-guide/input-data-and-bundles.md):
+  H5AD requirements, representations, model modes, and bundle contents.
+- [Advanced usage](docs/user-guide/advanced-usage.md): explanation,
+  manipulation, model training, graph training, asset validation, and bundle
+  construction.
 
-## Tests
+Graph construction and training are intentionally documented as advanced
+developer workflows. They are not required when using a released bundle.
+
+## Development
 
 ```bash
-pytest tests -q
+python -m pip install -e ".[dev]"
+pytest -q
 ```
+
+Please cite Regulus using the metadata in
+[`CITATION.cff`](CITATION.cff). Model bundles and checksums are archived on
+[Zenodo](https://doi.org/10.5281/zenodo.21488583). Regulus is released under the
+[MIT License](LICENSE).

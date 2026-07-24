@@ -1,0 +1,9 @@
+{
+  "file": "example_cells.h5ad",
+  "sha256": "ac4620d9bb87dec437fd8bc3a40134dd5d130bb3af4242b4d72879d234d4e0bf",
+  "n_cells": 8,
+  "n_genes": 20094,
+  "seed": 624,
+  "matrix": "synthetic log1p library-size-normalized expression",
+  "purpose": "CLI and API interface validation only"
+}

@@ -35,6 +35,30 @@ def _extract_zip(archive: Path, destination: Path) -> None:
         handle.extractall(destination)
 
 
+def _find_bundle_root(extracted: Path) -> Path:
+    required_fields = {
+        "bundle_id",
+        "train_config",
+        "perturb_ckpt",
+        "graph_ckpt",
+        "gene_universe",
+    }
+    candidates = []
+    for manifest_path in extracted.rglob("manifest.json"):
+        try:
+            payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            continue
+        if isinstance(payload, dict) and required_fields.issubset(payload):
+            candidates.append(manifest_path.parent)
+    if len(candidates) != 1:
+        raise ValueError(
+            "Bundle archive must contain exactly one bundle manifest; "
+            f"found {len(candidates)}"
+        )
+    return candidates[0]
+
+
 def run_download(args) -> int:
     catalog = _load_catalog()
     entries = catalog.get("bundles", {})
@@ -67,13 +91,11 @@ def run_download(args) -> int:
         extracted = temporary_root / "extracted"
         extracted.mkdir()
         _extract_zip(archive, extracted)
-        candidates = [path.parent for path in extracted.rglob("manifest.json")]
-        if len(candidates) != 1:
-            raise ValueError("Bundle archive must contain exactly one manifest.json")
+        bundle_root = _find_bundle_root(extracted)
         staged = output_root / f".{args.bundle_id}.staging"
         if staged.exists():
             shutil.rmtree(staged)
-        shutil.copytree(candidates[0], staged)
+        shutil.copytree(bundle_root, staged)
         if destination.exists():
             shutil.rmtree(destination)
         staged.replace(destination)

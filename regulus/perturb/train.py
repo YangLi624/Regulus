@@ -129,6 +129,8 @@ class PerturbTrainer:
 
         self.train_loader = None
         self.val_loader = None
+        self._train_gene_control_mean: Optional[np.ndarray] = None
+        self._train_cfo_control_mean: Optional[np.ndarray] = None
         self.optimizer = None
         self.lr_scheduler = None
         self.loss_fn = F.cross_entropy
@@ -216,6 +218,8 @@ class PerturbTrainer:
 
     def _init_data_loaders(self) -> None:
         train_dataset = self._make_dataset(self.train_data)
+        self._train_gene_control_mean = train_dataset.gene_control_mean
+        self._train_cfo_control_mean = train_dataset.cfo_control_mean
         self.train_loader = DataLoader(
             train_dataset,
             batch_size=self.batch_size,
@@ -375,6 +379,10 @@ class PerturbTrainer:
             "best_val_epoch": self.best_val_epoch,
             "model_state_dict": self.model.state_dict(),
         }
+        if self._train_gene_control_mean is not None:
+            payload["gene_control_mean"] = self._train_gene_control_mean
+        if self._train_cfo_control_mean is not None:
+            payload["cfo_control_mean"] = self._train_cfo_control_mean
         if self.optimizer is not None:
             payload["optimizer_state_dict"] = self.optimizer.state_dict()
         if self.lr_scheduler is not None:
@@ -401,6 +409,14 @@ class PerturbTrainer:
         self.model.load_state_dict(checkpoint["model_state_dict"], strict=True)
         self.best_val_top1_acc = float(checkpoint.get("best_val_top1_acc", 0.0))
         self.best_val_epoch = int(checkpoint.get("best_val_epoch", 0))
+        if checkpoint.get("gene_control_mean") is not None:
+            self._train_gene_control_mean = np.asarray(
+                checkpoint["gene_control_mean"], dtype=np.float32
+            )
+        if checkpoint.get("cfo_control_mean") is not None:
+            self._train_cfo_control_mean = np.asarray(
+                checkpoint["cfo_control_mean"], dtype=np.float32
+            )
 
     def load_checkpoint(self) -> None:
         latest = self.checkpoint_dir / "latest_checkpoint.pt"

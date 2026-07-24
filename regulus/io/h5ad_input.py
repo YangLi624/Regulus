@@ -17,7 +17,7 @@ def build_predict_dataset(
     expected_cfo_ids: Optional[Sequence[str]] = None,
     include_controls: bool = True,
 ) -> PerturbationDataset:
-    """Read prepared matrices without deriving baselines or dropping rows."""
+    """Build prediction inputs, deriving dataset control means in delta mode."""
     return PerturbationDataset(
         h5ad_path,
         gene_universe_path,

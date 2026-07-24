@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import warnings
 from collections import OrderedDict
 from pathlib import Path
 from typing import Optional
@@ -123,7 +124,9 @@ def compute_ucell_cfo_activity(
         raise ModuleNotFoundError("pyucell is required for CFO activity preprocessing") from exc
 
     signatures = {cfo_id.replace(":", "_"): genes for cfo_id, genes in gene_sets.items()}
-    uc.compute_ucell_scores(adata, signatures=signatures, suffix="_UCell", n_jobs=1)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=pd.errors.PerformanceWarning)
+        uc.compute_ucell_scores(adata, signatures=signatures, suffix="_UCell", n_jobs=1)
 
     cfo_ids = list(gene_sets)
     score_columns: list[str] = []

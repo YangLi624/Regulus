@@ -2,7 +2,7 @@
 set -euo pipefail
 
 regulus preprocess \
-  -i data/example_cells.h5ad \
+  -i examples/data/example_cells.h5ad \
   --bundle-path bundles/norman-post-state-v1 \
   -o outputs/example_cells.regulus.h5ad
 

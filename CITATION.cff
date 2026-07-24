@@ -2,9 +2,9 @@ cff-version: 1.2.0
 message: "If you use Regulus, please cite this software and the accompanying manuscript when available."
 title: "Regulus: interpretable perturbation driver inference and virtual functional manipulation"
 type: software
-version: 0.1.0
+version: 1.0.0
 doi: 10.5281/zenodo.21488583
-date-released: 2026-07-22
+date-released: 2026-07-24
 license: MIT
 authors:
   - family-names: "Li"
