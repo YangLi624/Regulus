@@ -98,12 +98,12 @@ scores for each input cell. A gene+CFO bundle supports `joint`, `gene_only`, and
 
 ## Choose a bundle
 
-| Bundle | Trained input | Intended starting point |
+| Bundle | Trained input | Dataset background |
 |---|---|---|
-| `norman-post-state-v1` | Gene + CFO, post-state | Broad single-gene CRISPRa driver inference |
-| `schmidt-post-state-v1` | Gene + CFO, post-state | CRISPRa driver inference in an independent perturbation context |
-| `tian-crispra-post-state-v1` | Gene + CFO, post-state | CRISPRa prediction and downstream attribution workflows |
-| `joung-tfatlas-cfo-post-state-v1` | CFO only, post-state | CFO-centered inference and virtual function manipulation |
+| `norman-post-state-v1` | Gene + CFO, post-state | Norman et al. Perturb-seq CRISPRa profiles from K562 cells; the bundle uses the single-gene subset |
+| `schmidt-post-state-v1` | Gene + CFO, post-state | Schmidt et al. CRISPRa profiles from primary human T cells under resting and restimulated conditions |
+| `tian-crispra-post-state-v1` | Gene + CFO, post-state | Tian et al. CRISPRa profiles from human iPSC-derived neurons |
+| `joung-tfatlas-cfo-post-state-v1` | CFO only, post-state | Joung et al. TFAtlas profiles from transcription-factor overexpression during directed differentiation of human pluripotent stem cells |
 
 Released bundles are designed for direct use and method exploration. They are
 not article-reproduction packages or substitutes for dataset-specific
